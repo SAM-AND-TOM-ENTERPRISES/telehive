@@ -4,6 +4,8 @@
 #include <DHT.h>
 #include <Adafruit_NeoPixel.h>
 
+#include "Payload.h"
+
 #define NODEID      99
 #define NETWORKID   100
 #define GATEWAYID   1
@@ -27,17 +29,6 @@ boolean requestACK = false;
 SPIFlash flash(8, 0xEF30); //EF40 for 16mbit windbond chip
 RFM69 radio;
 
-typedef struct {
-  float t1;
-  float h1;
-  float t2;
-  float h2;
-  float t3;
-  float h3;
-  float t4;
-  float h4;
-  float light;
-} Payload;
 Payload theData;
 #define DHTTYPE     DHT22
 #define LIGHTPIN A7
@@ -122,27 +113,6 @@ static inline void readDHT()
   theData.t4 = dht4.readTemperature();
 }
 
-static void printDataPacket(Payload * pld)
-{
-  Serial.print(pld->light);
-  Serial.print(",");
-  Serial.print(pld->h1);
-  Serial.print(",");
-  Serial.print(pld->t1);
-  Serial.print(",");
-  Serial.print(pld->h2);
-  Serial.print(",");
-  Serial.print(pld->t2);
-  Serial.print(",");
-  Serial.print(pld->h3);
-  Serial.print(",");
-  Serial.print(pld->t3);
-  Serial.print(",");
-  Serial.print(pld->h4);
-  Serial.print(",");
-  Serial.println(pld->t4);
-
-}
 void Blink(byte PIN, int DELAY_MS)
 {
   pinMode(PIN, OUTPUT);
