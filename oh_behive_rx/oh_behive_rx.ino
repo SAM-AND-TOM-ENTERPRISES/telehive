@@ -1,7 +1,9 @@
 #include <RFM69.h>
 #include <SPI.h>
 #include <SPIFlash.h>
+#include <ArduinoJson.h>
 #include "Payload.h"
+
 
 #define NODEID      1
 #define NETWORKID   100
@@ -14,7 +16,7 @@
 RFM69 radio;
 SPIFlash flash(8, 0xEF30); //EF40 for 16mbit windbond chip
 bool promiscuousMode = false; //set to 'true' to sniff all packets on the same network
-PLD_climate theData;
+
 
 
 void setup() {
@@ -24,13 +26,13 @@ void setup() {
   radio.setHighPower(); //uncomment only for RFM69HW!
   radio.encrypt(KEY);
   radio.promiscuous(promiscuousMode);
-  
+
   //TODO: This stuff probably wants reporting to some form of debug?
   // char buff[50];
   // sprintf(buff, "\nListening at %d Mhz...", FREQUENCY==RF69_433MHZ ? 433 : FREQUENCY==RF69_868MHZ ? 868 : 915);
   // Serial.println(buff);
-  
-  
+
+
   if (flash.initialize())
   {
     //Serial.println("SPI Flash Init OK!");
@@ -45,20 +47,28 @@ void setup() {
 void loop() {
   if (radio.receiveDone())
   {
-    if (radio.DATALEN == sizeof(PLD_climate))
+    switch (radio.DATA[0])
     {
-      theData = *(PLD_climate*)radio.DATA; //assume radio.DATA actually contains our struct and not something else
-      writeDataPacket(&theData);
-    }
-    else
-    {
-      //TODO: REPORT ERROR
-      // Serial.print("Invalid payload received, not matching Payload struct!");
+      case PKT_TMPHMD:
+        {
+          if (radio.DATALEN == sizeof(PLD_climate))
+          {
+            PLD_climate theData = *(PLD_climate*)radio.DATA; //assume radio.DATA actually contains our struct and not something else
+            writePacketToSerial(&theData, sizeof(PLD_climate));
+          }
+          else
+          {
+            //TODO: REPORT ERROR
+            // Serial.print("Invalid payload received, not matching Payload struct!");
+          }
+
+          break;
+        }
     }
 
+    //This should probably be sent sooner, excessive delay could result in retransmissions
     if (radio.ACKRequested())
     {
-      //   byte theNodeID = radio.SENDERID;
       radio.sendACK();
     }
 
@@ -68,16 +78,12 @@ void loop() {
 
 //TODO: Candidate for generalising
 /**
- * Writes a Data Packet to the serial in byte form. 
+ * Writes a Data Packet to the serial in byte form.
  */
-static void writeDataPacket(PLD_climate * pld)
+static void writePacketToSerial(void * pld, size_t sz)
 {
   //Get pointer to struct & size
   uint8_t * dp = (uint8_t *)pld;
-  size_t sz = sizeof(PLD_climate);
-
-  //Write Packet Type
-  Serial.write(PKT_TMPHMD);
 
   //Write Struct
   for (int i = 0; i < sz; i++)

@@ -3,6 +3,7 @@
 #include <ArduinoJson.h>
 
 typedef struct {
+    uint8_t pid;
     float t1;
     float h1;
     float t2;
@@ -14,10 +15,13 @@ typedef struct {
     float light;
 } PLD_climate;
 
-static void printDataPacket(void *pld, uint8_t pkt_type) {
+static void printDataPacket(void * pld) {
+    uint8_t pkt_type = *((uint8_t *)pld);
     switch(pkt_type){
         case PKT_TMPHMD:
             PLD_climate* p = (PLD_climate*)pld;
+            Serial.print(p->pid);
+            Serial.print(",");
             Serial.print(p->light);
             Serial.print(",");
             Serial.print(p->h1);

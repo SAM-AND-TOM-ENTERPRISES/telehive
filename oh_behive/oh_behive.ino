@@ -4,6 +4,8 @@
 #include <DHT.h>
 #include <Adafruit_NeoPixel.h>
 
+#include <ArduinoJson.h>
+
 #include "Payload.h"
 
 #define NODEID      99
@@ -48,6 +50,9 @@ void setup() {
   radio.initialize(FREQUENCY, NODEID, NETWORKID);
   radio.setHighPower();
   radio.encrypt(KEY);
+
+  theData.pid = PKT_TMPHMD;
+  
   char buff[50];
   sprintf(buff, "\nTransmitting at %d Mhz...", FREQUENCY == RF69_433MHZ ? 433 : FREQUENCY == RF69_868MHZ ? 868 : 915);
   Serial.println(buff);
@@ -71,17 +76,24 @@ void loop() {
 
   readDHT();
   readLight();
-  printDataPacket(&theData, 0x01);
+  printDataPacket(&theData);
   Serial.print("Sending struct (");
   Serial.print(sizeof(theData));
   Serial.print(" bytes) ... ");
+  
   if (radio.sendWithRetry(GATEWAYID, (const void*)(&theData), sizeof(theData)))
+  {
     Serial.print(" ok!");
+  }
   else Serial.print(" nothing...");
-  Serial.println();
+  {
+    Serial.println();
+  }
   //Blink(LED, 3);
+ 
   int leds = theData.light / 85;
-  Serial.println(leds);
+  
+  
   uint32_t rgb = strip.Color(255,0,0);
   for (int i = 0; i < strip.numPixels(); i++) {
     if(i < leds)
