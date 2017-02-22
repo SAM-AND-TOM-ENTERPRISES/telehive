@@ -14,7 +14,7 @@
 RFM69 radio;
 SPIFlash flash(8, 0xEF30); //EF40 for 16mbit windbond chip
 bool promiscuousMode = false; //set to 'true' to sniff all packets on the same network
-Payload theData;
+PLD_climate theData;
 
 
 void setup() {
@@ -45,9 +45,9 @@ void setup() {
 void loop() {
   if (radio.receiveDone())
   {
-    if (radio.DATALEN == sizeof(Payload))
+    if (radio.DATALEN == sizeof(PLD_climate))
     {
-      theData = *(Payload*)radio.DATA; //assume radio.DATA actually contains our struct and not something else
+      theData = *(PLD_climate*)radio.DATA; //assume radio.DATA actually contains our struct and not something else
       writeDataPacket(&theData);
     }
     else
@@ -70,11 +70,11 @@ void loop() {
 /**
  * Writes a Data Packet to the serial in byte form. 
  */
-static void writeDataPacket(Payload * pld)
+static void writeDataPacket(PLD_climate * pld)
 {
   //Get pointer to struct & size
   uint8_t * dp = (uint8_t *)pld;
-  size_t sz = sizeof(Payload);
+  size_t sz = sizeof(PLD_climate);
 
   //Write Packet Type
   Serial.write(PKT_TMPHMD);

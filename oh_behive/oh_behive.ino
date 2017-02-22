@@ -29,7 +29,7 @@ boolean requestACK = false;
 SPIFlash flash(8, 0xEF30); //EF40 for 16mbit windbond chip
 RFM69 radio;
 
-Payload theData;
+PLD_climate theData;
 #define DHTTYPE     DHT22
 #define LIGHTPIN A7
 DHT  dht1(DHT1PIN, DHTTYPE);
@@ -71,7 +71,7 @@ void loop() {
 
   readDHT();
   readLight();
-  printDataPacket(&theData);
+  printDataPacket(&theData, 0x01);
   Serial.print("Sending struct (");
   Serial.print(sizeof(theData));
   Serial.print(" bytes) ... ");

@@ -1,5 +1,7 @@
 #define PKT_TMPHMD 0x01
 
+#include <ArduinoJson.h>
+
 typedef struct {
     float t1;
     float h1;
