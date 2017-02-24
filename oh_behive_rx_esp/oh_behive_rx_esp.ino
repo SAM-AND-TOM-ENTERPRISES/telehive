@@ -33,8 +33,11 @@ void setup() {
 
 
 void readFill(void *head, uint8_t sz){
-    for(int z = 0; z < sz; z++){
-        while(!ESPserial.available());
+    for(int z = 4; z < sz; z++){
+        while(!ESPserial.available())
+        {
+          //yield();
+        }
         ((uint8_t*)head)[z] = ESPserial.read();
     }
 }
@@ -47,8 +50,10 @@ void loop() {
 
     if(stat==0x01){
         PLD_climate payload;
+       payload.pid = stat;
+       //Serial.print(sizeof(PLD_climate));
         readFill(&payload, sizeof(PLD_climate));
-        //printDataPacket(&current);
+       // printDataPacket(&payload);
         post(&payload, stat);
     }
 }
