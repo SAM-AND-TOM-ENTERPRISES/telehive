@@ -1,3 +1,5 @@
+#include <LowPower.h>
+#include "../test.h"
 #include <RFM69.h>
 #include <SPI.h>
 #include <SPIFlash.h>
@@ -89,6 +91,7 @@ void loop() {
   {
     Serial.println();
   }
+  radio.sleep();
   //Blink(LED, 3);
  
   int leds = theData.light / 85;
@@ -104,8 +107,8 @@ void loop() {
       }
       
   }
-  strip.show();
-  delay(1000);
+  Serial.flush();
+  LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
 }
 
 static inline void readLight()
