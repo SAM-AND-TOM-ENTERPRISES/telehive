@@ -1,10 +1,8 @@
 #include <LowPower.h>
-#include "../test.h"
 #include <RFM69.h>
 #include <SPI.h>
 #include <SPIFlash.h>
 #include <DHT.h>
-#include <Adafruit_NeoPixel.h>
 
 #include <ArduinoJson.h>
 
@@ -22,10 +20,8 @@
 #define DHT2PIN 4
 #define DHT3PIN 5
 #define DHT4PIN 6
+#define VPIN A6
 
-#define RGBPIN 8
-
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(12, RGBPIN, NEO_GRB + NEO_KHZ800);
 
 
 byte sendSize = 0;
@@ -48,6 +44,8 @@ void setup() {
   pinMode(DHT2PIN, INPUT_PULLUP);
   pinMode(DHT3PIN, INPUT_PULLUP);
   pinMode(DHT4PIN, INPUT_PULLUP);
+  pinMode(VPIN,INPUT);
+  
   Serial.begin(SERIAL_BAUD);
   radio.initialize(FREQUENCY, NODEID, NETWORKID);
   radio.setHighPower();
@@ -65,8 +63,7 @@ void setup() {
     Serial.println("SPI Flash Init FAIL! (is chip present?)");
 
   Serial.println("Init the DHT sensors");
-  strip.begin();
-  strip.show(); // Initialize all pixels to 'off'
+
   dht1.begin();
   dht2.begin();
   dht3.begin();
@@ -75,7 +72,8 @@ void setup() {
 }
 
 void loop() {
-
+  digitalWrite(LED, HIGH);
+  readVoltage();
   readDHT();
   readLight();
   printDataPacket(&theData);
@@ -91,25 +89,23 @@ void loop() {
   {
     Serial.println();
   }
+  digitalWrite(LED, LOW);
   radio.sleep();
-  //Blink(LED, 3);
- 
-  int leds = theData.light / 85;
   
-  
-  uint32_t rgb = strip.Color(255,0,0);
-  for (int i = 0; i < strip.numPixels(); i++) {
-    if(i < leds)
-      {strip.setPixelColor(i, rgb);}
-      else
-      {
-        strip.setPixelColor(i, 0);
-      }
-      
-  }
   Serial.flush();
   LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
 }
+
+float vdiv = (3.3f/1024.0f);
+
+static inline void readVoltage()
+{
+
+  float v = analogRead(VPIN);
+  v = analogRead(VPIN);
+  v = v*vdiv*2;
+  theData.batt = v; 
+  }
 
 static inline void readLight()
 {

@@ -13,6 +13,7 @@ typedef struct {
     float t4;
     float h4;
     float light;
+    float batt;
 } PLD_climate;
 
 static void printDataPacket(void * pld) {
@@ -38,7 +39,9 @@ static void printDataPacket(void * pld) {
             Serial.print(",");
             Serial.print(p->h4);
             Serial.print(",");
-            Serial.println(p->t4);
+            Serial.print(p->t4);
+            Serial.print(",");
+            Serial.println(p->batt);
             break;
     }
 }
@@ -48,6 +51,7 @@ static void jsonifyPayload(JsonObject& json, void *pld, uint8_t pkt_type) {
         case PKT_TMPHMD:
             PLD_climate* p = (PLD_climate*)pld;
             json["light"] = p->light;
+            json["batt"] = p->batt;
             json["t1"] = p->t1;
             json["h1"] = p->h1;
             json["t2"] = p->t2;
