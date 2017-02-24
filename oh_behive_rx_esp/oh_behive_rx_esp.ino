@@ -16,6 +16,8 @@ void setup() {
 
     // Set up the WiFi wotsits and wait to connect to the defined SSID
     WiFi.mode(WIFI_STA);
+    Serial.print("Connecting: ");
+    Serial.println(ssid);
     WiFi.begin(ssid, password);
 
     while (WiFi.status() != WL_CONNECTED) {
@@ -25,6 +27,8 @@ void setup() {
     Serial.println("");
     Serial.print("Connected: ");  
     Serial.println(WiFi.localIP());
+    Serial.print("Endpoint: ");
+    Serial.println(endpoint);
 }
 
 
@@ -54,7 +58,7 @@ void post(void *payload, uint8_t pkt_type) {
     JsonObject& json = jsonBuffer.createObject();
     jsonifyPayload(json, payload, pkt_type);
         
-    http.begin(server);    
+    http.begin(endpoint, fingerprint);
     http.addHeader("Content-Type", "application/json");
 
     char msg[256];
