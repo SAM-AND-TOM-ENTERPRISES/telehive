@@ -73,6 +73,7 @@ void setup() {
 
 void loop() {
   digitalWrite(LED, HIGH);
+  delay(2000UL);
   readVoltage();
   readDHT();
   readLight();
@@ -93,6 +94,10 @@ void loop() {
   radio.sleep();
   
   Serial.flush();
+
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
   LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
 }
 
