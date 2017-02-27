@@ -21,7 +21,10 @@
 #define DHT3PIN 5
 #define DHT4PIN 6
 #define VPIN A6
-
+#define DHTTYPE     DHT22
+#define LIGHTPIN A7
+#define MICPIN A5
+#define AUDIO_SAMPLE_TIME 100
 
 
 byte sendSize = 0;
@@ -30,8 +33,7 @@ SPIFlash flash(8, 0xEF30); //EF40 for 16mbit windbond chip
 RFM69 radio;
 
 PLD_climate theData;
-#define DHTTYPE     DHT22
-#define LIGHTPIN A7
+
 DHT  dht1(DHT1PIN, DHTTYPE);
 DHT  dht2(DHT2PIN, DHTTYPE);
 DHT  dht3(DHT3PIN, DHTTYPE);
@@ -44,15 +46,16 @@ void setup() {
   pinMode(DHT2PIN, INPUT_PULLUP);
   pinMode(DHT3PIN, INPUT_PULLUP);
   pinMode(DHT4PIN, INPUT_PULLUP);
-  pinMode(VPIN,INPUT);
-  
+  pinMode(VPIN, INPUT);
+  pinMode(MICPIN, INPUT);
+
   Serial.begin(SERIAL_BAUD);
   radio.initialize(FREQUENCY, NODEID, NETWORKID);
   radio.setHighPower();
   radio.encrypt(KEY);
 
   theData.pid = PKT_TMPHMD;
-  
+
   char buff[50];
   sprintf(buff, "\nTransmitting at %d Mhz...", FREQUENCY == RF69_433MHZ ? 433 : FREQUENCY == RF69_868MHZ ? 868 : 915);
   Serial.println(buff);
@@ -74,6 +77,7 @@ void setup() {
 void loop() {
   digitalWrite(LED, HIGH);
   delay(2000UL);
+  readAudio();
   readVoltage();
   readDHT();
   readLight();
@@ -81,7 +85,7 @@ void loop() {
   Serial.print("Sending struct (");
   Serial.print(sizeof(theData));
   Serial.print(" bytes) ... ");
-  
+
   if (radio.sendWithRetry(GATEWAYID, (const void*)(&theData), sizeof(theData)))
   {
     Serial.print(" ok!");
@@ -92,7 +96,7 @@ void loop() {
   }
   digitalWrite(LED, LOW);
   radio.sleep();
-  
+
   Serial.flush();
 
   LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
@@ -101,16 +105,16 @@ void loop() {
   LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
 }
 
-float vdiv = (3.3f/1024.0f);
+float vdiv = (3.3f / 1024.0f);
 
 static inline void readVoltage()
 {
 
   float v = analogRead(VPIN);
   v = analogRead(VPIN);
-  v = v*vdiv*2;
-  theData.batt = v; 
-  }
+  v = v * vdiv * 2;
+  theData.batt = v;
+}
 
 static inline void readLight()
 {
@@ -129,6 +133,33 @@ static inline void readDHT()
   theData.t4 = dht4.readTemperature();
 }
 
+static inline void readAudio()
+{
+  unsigned long startTime = millis(); // Start of sample window
+  uint16_t maxAmp = 0;
+  uint16_t minAmp = 1023;
+
+  int val;
+
+  //find min_max in 100ms window
+  while (millis() - startTime < AUDIO_SAMPLE_TIME)
+  {
+    val = analogRead(MICPIN);
+    if ( val < 1023) //prevent erroneous readings
+    {
+      if (val > maxAmp)
+      {
+        maxAmp = val; //save only the max reading
+      }
+      else if (val < minAmp)
+      {
+        minAmp = val; //save only the min reading
+      }
+    }
+  }
+
+  theData.vol = (maxAmp - minAmp);
+}
 void Blink(byte PIN, int DELAY_MS)
 {
   pinMode(PIN, OUTPUT);
